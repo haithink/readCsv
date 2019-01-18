@@ -39,7 +39,7 @@ seq_det = seq.to_deterministic()
 
 fcsv = open("AffineTrain.csv", 'w')
 
-for i in range(data.shape[0]):
+for i in range(10):#range(data.shape[0]):
     #print(data.loc[i][4])
     boxes = []
     box = ia.BoundingBox(x1=data.loc[i][4], y1=data.loc[i][5], x2=data.loc[i][6], y2=data.loc[i][7])
@@ -59,6 +59,15 @@ for i in range(data.shape[0]):
     fcsv.write(data.loc[i][0]+",")
     fcsv.write(str(int(after.x1))+","+str(int(after.y1))+","+str(int(after.x2))+","+str(int(after.y2)) + "\n")
 
+#    测试 转换后的坐标框是否正确!
+#    img = cv2.imread(imgPath + "/" + data.loc[i][0])
+#    image_aug = seq_det.augment_images([img])[0]
+#    image_after = bbs_aug.draw_on_image(image_aug, thickness=2, color=[0, 0, 255])
+#    cv2.imshow("Image", image_after)
+#    cv2.waitKey(0)
+
+
+#cv2.destroyAllWindows()    
 fcsv.close()
 
 
