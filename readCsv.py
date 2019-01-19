@@ -13,8 +13,7 @@ import os
 
 data = pd.read_csv('train.csv')
 
-
-    
+  
 seq = iaa.Sequential([
     iaa.Multiply((1.2, 1.5)), # change brightness, doesn't affect BBs
     iaa.Affine(
@@ -39,13 +38,19 @@ seq_det = seq.to_deterministic()
 
 fcsv = open("AffineTrain.csv", 'w')
 
-for i in range(10):#range(data.shape[0]):
+width = 2666
+height = 2000
+channel = 3
+label = "cyl"
+
+fcsv.write("filename,width,height,class,xmin,ymin,xmax,ymax\n")
+for i in range(data.shape[0]):
     #print(data.loc[i][4])
     boxes = []
     box = ia.BoundingBox(x1=data.loc[i][4], y1=data.loc[i][5], x2=data.loc[i][6], y2=data.loc[i][7])
     boxes.append(box)
     
-    bbs = ia.BoundingBoxesOnImage(boxes, shape=(2000, 2666, 3))
+    bbs = ia.BoundingBoxesOnImage(boxes, shape=(height, width, channel))
     bbs_aug = seq_det.augment_bounding_boxes([bbs])[0]
 
     before = bbs.bounding_boxes[0]
@@ -56,7 +61,7 @@ for i in range(10):#range(data.shape[0]):
         after.x1, after.y1, after.x2, after.y2)
     )
     
-    fcsv.write(data.loc[i][0]+",")
+    fcsv.write(data.loc[i][0] +"," + str(width) + "," + str(height) + "," + label + ",")
     fcsv.write(str(int(after.x1))+","+str(int(after.y1))+","+str(int(after.x2))+","+str(int(after.y2)) + "\n")
 
 #    测试 转换后的坐标框是否正确!
