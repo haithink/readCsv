@@ -11,15 +11,15 @@ import pandas as pd
 import cv2
 import os
 
-data = pd.read_csv('train.csv')
+
 
   
 seq = iaa.Sequential([
     iaa.Multiply((1.2, 1.5)), # change brightness, doesn't affect BBs
     iaa.Affine(
         translate_px={"x": 0, "y": 0},
-        scale=(0.5, 0.5),
-        shear = 10.0
+        scale=(1, 1),
+        #shear = 10.0
     ) # translate by 40/60px on x/y axis, and scale to 50-70%, affects BBs
 ])
     
@@ -36,44 +36,44 @@ seq_det = seq.to_deterministic()
 #        cv2.imwrite("res/"+ file,image_aug)
 #        print(file)
 
-fcsv = open("AffineTrain.csv", 'w')
-
 width = 2666
 height = 2000
 channel = 3
 label = "cyl"
 
-fcsv.write("filename,width,height,class,xmin,ymin,xmax,ymax\n")
-for i in range(data.shape[0]):
-    #print(data.loc[i][4])
-    boxes = []
-    box = ia.BoundingBox(x1=data.loc[i][4], y1=data.loc[i][5], x2=data.loc[i][6], y2=data.loc[i][7])
-    boxes.append(box)
+boxes = []
     
+filename = "NoExist"
+
+def genImage(boxes, filename):
     bbs = ia.BoundingBoxesOnImage(boxes, shape=(height, width, channel))
     bbs_aug = seq_det.augment_bounding_boxes([bbs])[0]
 
-    before = bbs.bounding_boxes[0]
-    after = bbs_aug.bounding_boxes[0]
-    print("BB %d: (%.4f, %.4f, %.4f, %.4f) -> (%.4f, %.4f, %.4f, %.4f)" % (
-        i,
-        before.x1, before.y1, before.x2, before.y2,
-        after.x1, after.y1, after.x2, after.y2)
-    )
-    
-    fcsv.write(data.loc[i][0] +"," + str(width) + "," + str(height) + "," + label + ",")
-    fcsv.write(str(int(after.x1))+","+str(int(after.y1))+","+str(int(after.x2))+","+str(int(after.y2)) + "\n")
+    #  测试 转换后的坐标框是否正确!
+    img = cv2.imread(imgPath + "/" + filename)
+    image_aug = seq_det.augment_images([img])[0]
+    image_after = bbs_aug.draw_on_image(image_aug, thickness=2, color=[0, 0, 255])
+    cv2.imwrite("GT/" + filename,image_after)
+    return 
 
-#    测试 转换后的坐标框是否正确!
-#    img = cv2.imread(imgPath + "/" + data.loc[i][0])
-#    image_aug = seq_det.augment_images([img])[0]
-#    image_after = bbs_aug.draw_on_image(image_aug, thickness=2, color=[0, 0, 255])
-#    cv2.imshow("Image", image_after)
-#    cv2.waitKey(0)
+data = pd.read_csv('train.csv')
 
-
-#cv2.destroyAllWindows()    
-fcsv.close()
-
-
-    
+for i in range(data.shape[0]):
+    #print(data.loc[i][4])
+    if(i == 0):
+        filename = data.loc[i][0]
+        
+    if(filename != data.loc[i][0]):
+        genImage(boxes, filename)
+        boxes = []
+        
+        box = ia.BoundingBox(x1=data.loc[i][4], y1=data.loc[i][5], x2=data.loc[i][6], y2=data.loc[i][7])
+        boxes.append(box)
+        filename = data.loc[i][0]
+    else:
+        box = ia.BoundingBox(x1=data.loc[i][4], y1=data.loc[i][5], x2=data.loc[i][6], y2=data.loc[i][7])
+        boxes.append(box)
+        
+genImage(boxes, filename)        
+        
+        
